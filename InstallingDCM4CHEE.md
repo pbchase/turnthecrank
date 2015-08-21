@@ -1,0 +1,255 @@
+# Introduction #
+
+As a prelude to a production implementation of the PACS system, dcm4chee, we are building this pilot system.
+
+
+# Details #
+
+References
+  * http://www.dcm4che.org/confluence/display/ee2/Installation
+  * http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE
+
+
+Download and install Jboss 4.2.3 for jdk5
+
+```bash
+
+cd /tmp
+wget -O jboss-4.2.3.GA.zip http://downloads.sourceforge.net/project/jboss/JBoss/JBoss-4.2.3.GA/jboss-4.2.3.GA.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fjboss%2Ffiles%2FJBoss%2FJBoss-4.2.3.GA%2F&ts=1357251067&use_mirror=superb-dca2
+
+sudo mkdir /opt/
+cd /opt
+sudo unzip /tmp/jboss-4.2.3.GA.zip
+```
+
+
+Download and install dcm4chee-2.17.1  Use the mySQL version for now, 'cause we know it well. Consider other options in production.
+
+```bash
+
+wget -O dcm4chee-2.17.1-mysql.zip http://downloads.sourceforge.net/project/dcm4che/dcm4chee/2.17.1/dcm4chee-2.17.1-mysql.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fdcm4che%2Ffiles%2Fdcm4chee%2F2.17.1%2F&ts=1357766171&use_mirror=iweb
+
+sudo apt-get install unzip
+sudo mkdir /opt/
+cd /opt
+sudo unzip /tmp/dcm4chee-2.17.1-mysql.zip
+```
+
+Install jboss parts into dcm4chee
+
+```bash
+
+cd /opt/dcm4chee-2.17.1-mysql/bin
+sudo sh install_jboss.sh /opt/jboss-4.2.3.GA
+```
+
+Get replacement JAI Image IO package for Linux-amd64 by copying libclib\_jiio.so to dcm4chee-2.17.1-xxx/bin/native
+
+```bash
+
+cd /tmp
+wget http://download.java.net/media/jai-imageio/builds/release/1.1/jai_imageio-1_1-lib-linux-amd64.tar.gz
+tar xzvf jai_imageio-1_1-lib-linux-amd64.tar.gz
+sudo cp jai_imageio-1_1/lib/libclib_jiio.so /opt/dcm4chee-2.17.1-mysql/bin/native/libclib_jiio.so
+```
+
+Make the MySQL database for dcm4chee-2.17.1-mysql and populate it
+
+```bash
+
+cat << END | mysql -uroot
+create database pacsdb;
+grant all on pacsdb.* to 'pacs'@'localhost' identified by 'pacs';
+END
+mysql -upacs -ppacs pacsdb < /opt/dcm4chee-2.17.1-mysql/sql/create.mysql
+```
+
+Download and install dcm4chee-arr-3.0.11-mysql
+
+```bash
+
+cd /tmp
+wget -O dcm4chee-arr-3.0.11-mysql.zip http://downloads.sourceforge.net/project/dcm4che/dcm4chee-arr/3.0.11/dcm4chee-arr-3.0.11-mysql.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fdcm4che%2Ffiles%2Fdcm4chee-arr%2F3.0.11%2F&ts=1361997187&use_mirror=hivelocity
+cd /opt
+sudo unzip /tmp/dcm4chee-arr-3.0.11-mysql.zip
+sudo chmod go-w /opt/dcm4chee-arr-3.0.11-mysql/
+```
+
+Install jboss parts into dcm4chee-arr according to dcm4chee-arr INSTALL.txt
+
+```bash
+
+cd /opt/dcm4chee-arr-3.0.11-mysql/bin
+sudo sh install_jboss.sh /opt/jboss-4.2.3.GA
+```
+
+Configure dcm4chee-arr Database in MySQL according to dcm4chee-arr INSTALL.txt
+
+```bash
+
+cat << END | mysql -uroot
+create database arrdb;
+grant all on arrdb.* to 'arr'@'localhost' identified by 'arr';
+END
+```
+
+Install our preferred JDK
+
+```bash
+
+apt-get install openjdk-6-jdk
+```
+
+Install dcm4chee-arr parts into dcm4chee
+
+```bash
+
+cd /opt/dcm4chee-2.17.1-mysql/bin
+sudo sh install_arr.sh /opt/dcm4chee-arr-3.0.11-mysql/
+```
+
+Aim environment variable JAVA\_HOME to the JDK location by adding JAVA\_HOME="/usr/lib/jvm/java-6-openjdk" to the appropriate .conf files
+
+```bash
+
+cd /opt/dcm4chee-arr-3.0.11-mysql/bin
+cat << END | sudo patch -p2
+--- a/bin/run.conf
++++ b/bin/run.conf
+@@ -30,6 +30,7 @@
+# be defined to $JAVA_HOME/bin/java, else $JAVA will be "java".
+#
+#JAVA_HOME="/opt/java/jdk"
++JAVA_HOME="/usr/lib/jvm/java-6-openjdk"
+
+#
+# Specify the exact Java VM executable to use.
+END
+```
+
+```bash
+
+cd /opt/dcm4chee-2.17.1-mysql/bin
+cat << END | sudo patch -p1
+--- a/run.conf
++++ b/run.conf
+@@ -30,6 +30,7 @@
+# be defined to $JAVA_HOME/bin/java, else $JAVA will be "java".
+#
+#JAVA_HOME="/opt/java/jdk"
++JAVA_HOME="/usr/lib/jvm/java-6-openjdk"
+
+#
+# Specify the exact Java VM executable to use.
+END
+```
+
+Start JBOSS and dcm4chee.
+
+```bash
+
+cd /opt/dcm4chee-2.17.1-mysql/bin; sudo sh run.sh
+```
+
+Set the file system location for the image archive to "/dcm4chee-archive" by following these steps.
+
+  * Connect to JBoss's JMX Console at http://localhost:8080/jmx-console/ and login using also the Administrator account 'admin', with password 'admin'.
+  * Follow the link "group=ONLINE\_STORAGE,service=FileSystemMgt" to the configuration page for File System Management service under the "dcm4chee.archive" heading.
+  * Invoke the operation addRWFileSystem(), with argument dirPath specifying the directory, where the archive shall store received objects/images.
+
+Change the default AE Title by following these steps.
+
+  * Connect to JBoss's JMX Console as above
+  * Follow the link "service=AE" to the configuration page for AE (Application Entity - a DICOM term for a DICOM node on the network) service under the "dcm4chee.archive" heading.
+  * Invoke the operation updateAETitle with the old AE Title (DCM4CHEE if unchanged from the default), and new AE Title as parameters.
+
+Modify web image cache directories setting CacheDataRootDirectory = "/var/cache/wadocachedata" and CacheJournalRootDirectory = "/var/cache/wadocachejournal".
+
+  * Connect to JBOSS as above.
+  * Follow the link "service=WADOService" to the configuration page for the WADO Service
+  * Set the attribute values for "CacheDataRootDirectory" and "CacheJournalRootDirectory"
+
+Set the directory used for caching generated PDF representations of archived Structured Report Documents requested by IHE Retrieve Information for Display (RID) Services to /var/cache/dcm4chee/rid/store
+
+Allow the server to accept dicoms with an missing patient ID.
+
+  * Connect to JBOSS as above.
+  * Follow the link "service=StoreScp" to the configuration page for the WADO Service
+  * Set the attribute value "AcceptMissingPatientID" to "true".
+
+**edit opt/dcm4chee-2.17.1-mysql/conf/dcm4chee-docstore/dcm4chee-docstore-cfg.xml  (_this section needs work_)**
+
+Note, Wikipedia provides these default TCP and UDP port numbers for DICOM services:
+
+  * 104 well-known port for DICOM over TCP or UDP. Since 104 is in the reserved subset, many operating systems require special privileges to use it.
+  * 2761 registered port for DICOM using Integrated Secure Communication Layer (ISCL) over TCP or UDP
+  * 2762 registered port for DICOM using Transport Layer Security (TLS) over TCP or UDP
+  * 11112 registered port for DICOM using standard, open communication over TCP or UDP
+
+# Test your work #
+
+There a few ways to test your work.  Linux clients often have dcmtk and its suite of tools.  You can send an image with the storescu utility:
+
+```bash
+
+storescu -aec _aetitleOfServer_ _serverPortNumber_ _serverHostname_ _filename_
+```
+
+Or use dcm4che.
+
+```bash
+
+dcmsnd _aetitleOfServer@serverHostname:serverPortNumber_  _filename_
+```
+
+Address these items in dcm4chee:
+
+**17:22:14,538 WARN  [SecurityMetadataStore](SecurityMetadataStore.md) WARNING! POTENTIAL SECURITY RISK. It has been detected that the MessageSucker component which sucks messages from one node to another has not had its password changed from the installation default. Please see the JBoss Messaging user guide for instructions on how to do this.**
+
+
+# Installing Weasis #
+
+Weasis is a web-based viewer for DICOM images.  It integrates well with the dcm4chee-web interface.  To install it download and deploy these items.  For installation details see  http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE
+
+```bash
+
+cd /tmp
+wget -O weasis.war http://downloads.sourceforge.net/project/dcm4che/Weasis/1.2.4/weasis.war?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fdcm4che%2Ffiles%2FWeasis%2F1.2.4%2F&ts=1365714005&use_mirror=iweb
+wget -O dcm4chee-web-weasis.jar http://downloads.sourceforge.net/project/dcm4che/Weasis/dcm4chee-web3/3.0.1/dcm4chee-web-weasis.jar?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fdcm4che%2Ffiles%2FWeasis%2Fdcm4chee-web3%2F3.0.1%2F&ts=1365713720&use_mirror=iweb
+wget -O weasis-pacs-connector.war http://downloads.sourceforge.net/project/dcm4che/Weasis/dcm4chee-web3/3.0.1/weasis-pacs-connector.war?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fdcm4che%2Ffiles%2FWeasis%2Fdcm4chee-web3%2F3.0.1%2F&ts=1365713898&use_mirror=hivelocity
+sudo mv *weasis*.*ar /opt/dcm4chee-2.17.1-mysql/server/default/deploy/
+```
+
+To activate Weasis, go to the JMX console (at http://localhost:8080/jmx-console)
+In dcm4chee.web select service=WebConfig and set these two values:
+
+  * WebviewerNames = weasis
+  * WebviewerBaseUrl = NONE
+
+Click the Apply Changes button
+
+## Configure Weasis ##
+
+The default configuration of Weasis is stored in two files inside weasis.war. To override the default configuration download default configuration files and customize them.
+
+  * Go to http://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/trunk/
+  * Select the latest version and navigate to src/main/resources
+  * Download weasis-connector-default.properties and rename it weasis-pacs-connector.properties
+  * Download weasis-jnlp-default.xml and rename it weasis-jnlp.xml
+  * Copy the files to the classpath of the Servlet container. The best location would typically be server/default/conf.
+  * Change the AE Title, pacs.aet, in the file weasis-pacs-connector.properties to match that of dcm4chee
+  * Adjust pacs.host, and pacs.port if needed.
+  * Lastly, restart dcm4chee.
+
+
+To script weasis configuration, you could do something like this:
+
+```bash
+
+cd /tmp
+wget -O weasis-pacs-connector.properties http://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0/src/main/resources/weasis-connector-default.properties?revision=17747
+wget -O weasis-jnlp.xml http://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0/src/main/resources/weasis-jnlp-default.xml?revision=17747
+sed -e "s/pacs.aet=DCM4CHEE/pacs.aet=adrc/" -i weasis-pacs-connector.properties
+sudo mv weasis-pacs-connector.properties /opt/dcm4chee-2.17.1-mysql/server/default/conf/
+sudo mv weasis-jnlp.xml /opt/dcm4chee-2.17.1-mysql/server/default/conf/
+```

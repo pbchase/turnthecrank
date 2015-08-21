@@ -1,0 +1,63 @@
+# Introduction #
+
+TODO: Write an introduction to this article about creating your first gitlfow feature using Google Code.
+
+## Create your first 'feature branch' using git flow. ##
+
+to least all your local features or 'feature branches' use the 'feature list' command
+```bash
+
+~/git/turnthecrank.ci$ git flow feature list
+```
+
+If this is your first feature or you don't have any local feature branches you should get the following output.
+```bash
+
+No feature branches exist.
+
+You can start a new feature branch:
+
+git flow feature start <name> [<base>]
+
+
+```
+
+git-flow is very helpful. After it tells you you don't have any local feature branches it gives you a hint on how to do it. Naming the feature has as many stylistic arguments for and against as you can think of. Here we will use camel case to describe an agile like feature called "story-helloWorld" To give you an idea of how I think about this my peers use names like "bug-1234-brokenZipVaildation", where the numeric value is the issue number in a tracker or for new features "story-4321-updateDemographicsForm". Again the numeric value is from the tracker. This is just a reminder to help sort out feature branches and prevent collision. You can use any style you want. Here we go.
+```bash
+
+git flow feature start story-helloWorld
+```
+
+You should get the following output if it works! You will notice that git-flow is good at providing you with a summary of actions and letting you know what repository you are in after you have executed a command. I like this, because I get lost and confused easily.
+```bash
+Switched to a new branch 'feature/story-helloWorld'
+
+Summary of actions:
+- A new branch 'feature/story-helloWorld' was created, based on 'develop'
+- You are now on branch 'feature/story-helloWorld'
+
+Now, start committing on your feature. When done, use:
+
+git flow feature finish story-helloWorld
+
+```
+
+Publish the feature to the remote repository using git flow feature publish. Now you have a local copy and a remote copy of the feature branch in case your laptop gets run over by the bus. you may have to force a git push in your feature branch and then do git flow publish
+```
+
+
+:~/git/turnthecrank.ci$ git flow feature publish story-helloWorld
+remote: Scanning pack: 100% (5/5), done.
+remote: Storing objects: 100% (5/5), done.
+remote: Processing commits: 100% (1/1), done.
+To https://code.google.com/p/turnthecrank.ci/
+* [new branch]      feature/story-helloWorld -> feature/story-helloWorld
+Already on 'feature/story-helloWorld'
+
+Summary of actions:
+- A new remote branch 'feature/story-helloWorld' was created
+- The local branch 'feature/story-helloWorld' was configured to track the remote branch
+- You are now on branch 'feature/story-helloWorld'
+
+
+```

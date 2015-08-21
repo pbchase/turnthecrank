@@ -1,0 +1,33 @@
+# Introduction #
+
+We would like to link research images to other systems that contain data relating to study subjects.  The system in question will probably by REDCap but need to describe general methods to make images accessible via WADO.
+
+# References #
+
+See the WADO Specification at http://medical.nema.org/dicom/2004/04_18PU.PDF
+
+# WADO IDs #
+
+WADO uses these IDs to identify an image of set of images:
+
+| WADO URL parameter | Description | DICOM Field Name in dcm4chee |
+|:-------------------|:------------|:-----------------------------|
+| studyUID           | Identifies study of a patient.  Contains 1 or more image sets | Study Instance UID           |
+| seriesUID          | Identifies a set of images | Study Instance UID           |
+| objectUID          | Identifies a single image within a set of images | SOP Instance UID             |
+
+Together they form a WADO url that looks like
+
+```
+
+/wado?requestType=WADO&studyUID=99&seriesUID=999&objectUID=9999&contentType=application/dicom&useOrig=true
+```
+
+UIDs are typically long, multi-part, dot-separated numbers like these:
+
+```
+
+1.3.46.670589.11.17276.5.0.1044.2012082317221664000
+1.3.46.670589.11.17276.5.0.8100.2012082318085054431
+1.3.46.670589.11.17276.5.0.8100.2012082318163876587
+```

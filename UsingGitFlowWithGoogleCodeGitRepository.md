@@ -1,0 +1,81 @@
+# Using git flow with Google code git repository #
+# Introduction #
+
+The purpose of this series of articles is for me to condense all the information I found online about git, gitflow and Google code that I found useful to me. Your mileage may vary. So, after setting up the Google Code project I decided to create a git repo just for this adventure I'm endeavoring on. Here's my crazy idea, I want to take 2 "hello world!" programs written in php and python from creation to "deployment" through a yet to be defined process that will include branching and tagging using the git-glow workflow model and then code reviewing using Gerrit with automated Unit test runs and feedback provided by Jenkins. Why do this crazy thing? Well I want to document the process for two main reasons, one so that I can repeat it and two so that I can improve it as time goes on. All the tools themselves are great. Being simple minded, I found trying to knit them together a little daunting. When presented with anything daunting I need to write things down and draw pictures. Think oil change without putting the drain plug back in.  Advanced warning. As these articles develop they will be very rough and disorganized. Improvements follow article usefulness. Oh yeah, you asked why I'm using a wiki to do this. Well, I like wiki's and I want to be able to make this content into data that can be moderately transportable. I've moved wiki's from spot a to spot b in the past and the sun rose the next day and the earth was still spinning after all was said and done, so I thought I'd be ok doing it for this body of content. - senrabc
+
+
+# References #
+
+**Helpful links \ Required reading**
+  * Getting Started with Google Code http://code.google.com/p/support/wiki/GettingStarted
+  * Getting Started with git-flow http://nvie.com/posts/a-successful-git-branching-model/
+
+
+
+
+## Clone the remote git repo at google code ##
+
+Run the clone repo git command on the REMOTE repository
+```bash
+
+~/git$ git clone https://senrabc@code.google.com/p/turnthecrank.ci/
+```
+
+If everything is working you should see something like this output.
+```bash
+
+Cloning into 'turnthecrank.ci'...
+remote: Counting objects: 6, done.
+remote: Finding sources: 100% (6/6), done.
+remote: Total 6 (delta 0)
+Unpacking objects: 100% (6/6), done.
+
+```
+
+Change directory into the 'turnthecrank.ci' repo you just cloned and do a git-flow init.
+```bash
+
+~/git/turnthecrank.ci$git flow init
+```
+I accept all the defaults by hitting enter and get the following output.
+```bash
+
+
+Which branch should be used for bringing forth production releases?
+- master
+Branch name for production releases: [master]
+Branch name for "next release" development: [develop]
+
+How to name your supporting branch prefixes?
+Feature branches? [feature/]
+Release branches? [release/]
+Hotfix branches? [hotfix/]
+Support branches? [support/]
+Version tag prefix? []
+
+```
+
+If you run git branch you should now be on your local develop branch for the turnthecrank.ci repo.
+
+```bash
+
+~/git/turnthecrank.ci$ git branch
+```
+Output from 'git branch' will list all the branches and have a `*` next to the branch you are switched to.
+```bash
+
+* develop
+master
+```
+
+It's wise at this point to push the new branch to the remote on Google Code. This is necessary for following the git flow model of using a develop and master branch. Google code does not have a develop branch by default when you create a new repo.
+
+```bash
+
+git push origin develop
+```
+
+You are now ready to create your first feature.
+
+# Next: gitflow first feature with Google code #
+http://code.google.com/p/turnthecrank/wiki/gitflowFirstfeature

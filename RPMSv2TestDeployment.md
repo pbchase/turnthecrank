@@ -1,0 +1,83 @@
+An express deployment of RPMSv2 on Tomcat6 on Debian Squeeze
+
+# Introduction #
+
+This document describes a scripted installation of RPMS v2 in a test environment.  It assumes you are building from source and deploying directly from the root of your source tree.  Tomcat6 and Debian Squeeze are the infrastructure for this deployment.  Further, this deployment is to a single Tomcat instance.  As this is a single instance of tomcat, the admin and collector apps are configured to find the services app at local host.
+
+This environment is outside the standard, recommended method, but it is quick and easy.
+
+# Details #
+
+Stop Tomcat.
+
+```bash
+
+export TOMCAT=tomcat6
+sudo /etc/init.d/$TOMCAT stop
+```
+
+Configure each of the RPMS applications.
+
+```bash
+
+cat << END | sudo tee /var/lib/$TOMCAT/shared/classes/consent-services.props
+neo4j-db-path=/data/rpms
+END
+
+cat << END | sudo tee /var/lib/$TOMCAT/shared/classes/consent-collector.props
+services.url=http://localhost:8080/services
+rpms2.dsa.url=http://localhost:8080/services
+END
+
+cat << END | sudo tee /var/lib/$TOMCAT/shared/classes/consent-admin.props
+services.url=http://localhost:8080/services
+END
+
+```
+
+If you don't already have it configured, set the log4j properties as well:
+
+```bash
+
+cat << END | sudo tee /var/lib/$TOMCAT/shared/classes/log4j.properties
+log4j.rootLogger=WARN, console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.conversionPattern=%5p [%t] (%F:%L) - %m%n
+END
+
+```
+
+
+
+Copy the war files to the Tomcat webapps directory
+
+```bash
+
+find . -iname "*.war" | grep consent-services | xargs -i sudo cp {} /var/lib/$TOMCAT/webapps/services.war
+find . -iname "*.war" | grep consent-collect | xargs -i sudo cp {} /var/lib/$TOMCAT/webapps/collect.war
+find . -iname "*.war" | grep consent-admin | xargs -i sudo cp {} /var/lib/$TOMCAT/webapps/admin.war
+```
+
+Start tomcat and monitor the deployment
+
+```bash
+
+sudo /etc/init.d/$TOMCAT start
+tail -f /var/lib/$TOMCAT/logs/catalina.out
+```
+
+Access the admin app at http://127.0.0.1:8080/admin/  These accounts are valid:
+
+| **Username** | **Password** | **Role** |
+|:-------------|:-------------|:---------|
+| admin        | root         | superuser |
+| ex-admin     | password     | Admin for Example Organization |
+| ex-collector | password     | Can collect consents within "In Patient" within Example Organization |
+| ex-designer  | password     | Can design consents within Example Organization |
+| ex-scollector | password     | Super Clerk within Example Organization |
+| ex-theman    | password     | Can do everything within Example Organization |
+
+To locate other predefined accounts, search the file ./consent-services/src/main/clojure/org/healthsciencessc/rpms2/consent\_services/seed.clj in source control.
+
+Access the collector app at http://127.0.0.1:8080/collect/view/login
